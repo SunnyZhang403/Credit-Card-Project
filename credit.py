@@ -21,11 +21,9 @@ def updateacc(day, month):
     if month > last_update_month:
         cur_balance_owing_intst = cur_balance_owing_intst * 1.05
         cur_balance_owing_intst = cur_balance_owing_intst + cur_balance_owing_recent
-        cur_balance_owing_intst = cur_balance_owing_intst*(1.05**(month-last_update_month-1))
+        cur_balance_owing_intst = cur_balance_owing_intst * (1.05 ** (month - last_update_month - 1))
         cur_balance_owing_recent = 0
-    # else:
-    #     last_update_month = month
-    #     last_update_day = day
+
     last_update_day = day
     last_update_month = month
 
