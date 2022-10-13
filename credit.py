@@ -1,12 +1,10 @@
-
-# You should modify initialize()
 def initialize():
     global cur_balance_owing_intst, cur_balance_owing_recent
     global last_update_day, last_update_month
     global last_country, last_country2
     global accountstatus
 
-    accountstatus = "active" #dfault status is active
+    accountstatus = "active" #default status is active
 
     cur_balance_owing_intst = 0
     cur_balance_owing_recent = 0
@@ -16,7 +14,6 @@ def initialize():
     last_country = None
     last_country2 = None
 
-    MONTHLY_INTEREST_RATE = 0.05
 
 def updateacc(day, month):
     global cur_balance_owing_recent, cur_balance_owing_intst, last_update_month, last_update_day
@@ -26,9 +23,9 @@ def updateacc(day, month):
         cur_balance_owing_intst = cur_balance_owing_intst + cur_balance_owing_recent
         cur_balance_owing_intst = cur_balance_owing_intst*(1.05**(month-last_update_month-1))
         cur_balance_owing_recent = 0
-    else:
-        last_update_month = month
-        last_update_day = day
+    # else:
+    #     last_update_month = month
+    #     last_update_day = day
     last_update_day = day
     last_update_month = month
 
@@ -46,7 +43,7 @@ def date_same_or_later(day1, month1, day2, month2):
 
 
 def all_three_different(c1, c2, c3):
-    if c1 == c2 or c2 == c3 or c1 ==c3:
+    if c1 == c2 or c2 == c3 or c1 == c3:
         return False
     else:
         return True
@@ -57,7 +54,7 @@ def disableaccount():
 
 def purchase(amount, day, month, country):
     global cur_balance_owing_recent, last_country, last_country2, last_update_day, last_update_month, accountstatus
-    if date_same_or_later(day, month, last_update_day, last_update_month) == True and all_three_different(last_country,last_country2,country)== False and accountstatus == "active":
+    if date_same_or_later(day, month, last_update_day, last_update_month) == True and all_three_different(last_country, last_country2, country)== False and accountstatus == "active":
 
         updateacc(day, month)
         last_country2 = last_country
@@ -65,10 +62,11 @@ def purchase(amount, day, month, country):
         cur_balance_owing_recent = cur_balance_owing_recent + amount
     else:
         disableaccount()
-        # print("Account is disabled")
         return "error"
 def amount_owed(day, month):
     global cur_balance_owing_intst, cur_balance_owing_recent
+    if date_same_or_later(day, month, last_update_day, last_update_month) == False:
+        return "error"
     updateacc(day, month)
     return cur_balance_owing_recent + cur_balance_owing_intst
 
@@ -76,13 +74,15 @@ def amount_owed(day, month):
 def pay_bill(amount, day, month):
     global cur_balance_owing_intst, cur_balance_owing_recent
 
-    if accountstatus == "disabled":
-        # print("Account is disabled")
+    if accountstatus == "disabled" or date_same_or_later(day, month, last_update_day, last_update_month) == False:
         return "error"
-    updateacc(day,month)
+    updateacc(day, month)
     if amount > cur_balance_owing_intst:
-        cur_balance_owing_intst = 0
+
         cur_balance_owing_recent = cur_balance_owing_recent - (amount - cur_balance_owing_intst)
+
+        cur_balance_owing_intst = 0
+
     else:
         cur_balance_owing_intst = cur_balance_owing_intst - amount
 
@@ -92,27 +92,28 @@ def pay_bill(amount, day, month):
 initialize()
 
 if __name__ == '__main__':
-    # Describe your testing strategy and implement it below.
-    # What you see here is just the simulation from the handout, which
-    # doesn't work yet.
+
     initialize()
-    purchase(80, 8, 1, "Canada")
-    print("Now owing:", amount_owed(8, 1))      # 80.0                              (Test1)
-    pay_bill(50, 2, 2)
-    print("Now owing:", amount_owed(2, 2))      # 30.0     (=80-50)                 (Test2)
-    print("Now owing:", amount_owed(6, 3))      # 31.5     (=30*1.05)               (Test3)
-    purchase(40, 6, 3, "Canada")
-    print("Now owing:", amount_owed(6, 3))      # 71.5     (=31.5+40)               (Test4)
-    pay_bill(30, 7, 3)
-    print("Now owing:", amount_owed(7, 3))      # 41.5     (=71.5-30)               (Test5)
-    print("Now owing:", amount_owed(1, 5))      # 43.65375 (=1.5*1.05*1.05+40*1.05) (Test6)
-    purchase(40, 2, 5, "France")
-    print("Now owing:", amount_owed(2, 5))      # 83.65375                          (Test7)
-    print(purchase(50, 3, 5, "United States"))  # error    (3 diff. countries in    (Test8)
-                                                #          a row)
-    print("Now owing:", amount_owed(3, 5))      # 83.65375 (no change, purchase     (Test9)
-                                                #           declined)
-    print(purchase(150, 3, 5, "Canada"))        # error    (card disabled)          (Test10)
-    print("Now owing:", amount_owed(1, 6))      # 85.8364375                        (Test11)
-                                                # (43.65375*1.05+40)
+    print("Current balance is:", amount_owed(1, 1)) #verify that starting balance is correct and initialized properly - 0.0
+    purchase(20, 2, 1, "Canada")
+    print("Current balance is:", amount_owed(2, 1)) #verify first purchase went through properly - 20.0
+    print("Current balance is:", amount_owed(2, 2)) #verify that no interest is paid on this payment (interest should be charged on the
+                                                    #balance accruing interest prior to the monthly balance being transferred) - 20.0
+    pay_bill(10, 3, 2)
+    print("Current balance is:", amount_owed(3, 2)) #verify bill was paid - 10
+    print("Current balance is:", amount_owed(3, 3)) #verify interest charged on remaining money - 10.5
+    purchase(50, 4, 3, "Canada")
+    pay_bill(55, 5, 3) #verify the bill paying works even if the amount paid > the amount accruing interest
+    print("Current balance is:", amount_owed(6, 3)) #5.5
+    pay_bill(5.5, 6, 3) #clear account for convenience
+    purchase(100, 6, 3, "Canada")
+    print("Current balance is:", amount_owed(6, 6)) #test interest for several months - 110.25
+    purchase(1,7,6, "United States")
+    purchase(1,8,6, "Mexico") #test disabling
+    print("Current balance is:", amount_owed(9, 6)) #111.25 (only adds the United States transaction but not the Mexico transaction)
+    purchase(1, 9, 6, "Canada") #error
+    accountstatus = "active" #re-enable account for further testing
+
+    purchase(1,8,6,"Canada") #error
+    print("Current balance is:", amount_owed(8,6))
 
